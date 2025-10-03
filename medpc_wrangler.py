@@ -4,7 +4,7 @@
 * file: medpc_wrangler.py
 * created on: feb 24, 2024
 * created by: erica townsend
-* last revised on: feb 24, 2024
+* last revised on: oct 3, 2025
 
 ~ ~ ~
 
@@ -14,6 +14,12 @@ useable & digestible format for further analysis
 ~ ~ ~
 
 REQUIREMENTS:
+IF TWO ARRAYS ARE SAVED:
+* event codes must be in Y array
+* timestamps must be in Z array
+to change, edit the letters in extract_data_from_file function.
+
+IF ONE ARRAY IS SAVED:
 * requires event/timestamp pairs to be saved as the following:
     event code: X0000
     timestamp in seconds (X.XXX)
@@ -24,7 +30,7 @@ REQUIREMENTS:
 * requires data to be saved in B array
     * IF DATA SAVED IN DIFFERENT ARRAY: change 'B:' to array letter and 'C:' to 
     array letter directly following data array in your datafiles in the 
-    extract_data_from_file functionx
+    extract_data_from_file function
 '''
 
 import numpy as np
@@ -63,74 +69,111 @@ def extract_data(subject_data):
     return extracted_data
 
 # extract each event-timestamp instance from strings into a list of event-timestamps
-def extract_data_from_file(file_data):
+def extract_data_from_file(file_data, multi_array = True):
+    raw_data = []
     all_subjects_data = []
-    for subject_lines in file_data:
-        subject_data = []
-        subject_identifier = None
-        session_id = None
-        is_data_line = False
-        for line in subject_lines:
-            if line.startswith('Subject:'):
-                subject_identifier = line.split(':')[-1].strip()
-            elif line.startswith('Experiment:'):
-                session_id = line.split(':')[-1].strip()
-            elif line.startswith('B:'):
-                is_data_line = True
-            elif line.startswith('C:'):
-                is_data_line = False
-            elif is_data_line:
-                subject_data.append(line)
-        if subject_identifier and subject_data:
-            all_subjects_data.append((subject_identifier, session_id, extract_data(subject_data)))
-    return all_subjects_data
+    if multi_array == True:
+        for subject_lines in file_data:
+            subject_data = []
+            subject_time = []
+            subject_identifier = None
+            session_id = None
+            is_data_line = False
+            is_time_line = False
+            for line in subject_lines:
+                if line.startswith('Subject:'):
+                    subject_identifier = line.split(':')[-1].strip()
+                elif line.startswith('Experiment:'):
+                    session_id = line.split(':')[-1].strip()
+                elif line.startswith('Y:'):
+                    is_data_line = True
+                elif line.startswith('Z:'):
+                    is_data_line = False
+                    is_time_line = True
+                elif is_data_line:
+                    subject_data.append(line)
+                elif is_time_line:
+                    subject_time.append(line)
+            if subject_identifier and subject_data:
+                raw_data.append((subject_identifier, session_id, extract_data(subject_data), extract_data(subject_time)))
+        return raw_data
+    elif multi_array == False:
+        for subject_lines in file_data:
+            subject_data = []
+            subject_identifier = None
+            session_id = None
+            is_data_line = False
+            for line in subject_lines:
+                if line.startswith('Subject:'):
+                    subject_identifier = line.split(':')[-1].strip()
+                elif line.startswith('Experiment:'):
+                    session_id = line.split(':')[-1].strip()
+                elif line.startswith('B:'):
+                    is_data_line = True
+                elif line.startswith('C:'):
+                    is_data_line = False
+                elif is_data_line:
+                    subject_data.append(line)
+            if subject_identifier and subject_data:
+                all_subjects_data.append((subject_identifier, session_id, extract_data(subject_data)))
+        return all_subjects_data
 
 # take extracted data list and form a more digestible dataframe with events and timestamps
 # if event codes are not in X0000 format or more/less event codes exist this will need updating
 def time_event(data_list):
     time_event_data = []
-    for subject_id, session_id, datapoints in data_list:
-        singlesubj_data = []
-        for datapoint in datapoints:
-            temp = []
-            datapoint = float(datapoint)
-            if datapoint > 10000 and datapoint < 20000:
-                temp = [(round((datapoint-10000), 4)), 10000]
-                singlesubj_data.append(temp)
-            elif datapoint > 20000 and datapoint < 30000: 
-                temp = [(round((datapoint-20000), 4)), 20000]
-                singlesubj_data.append(temp)
-            elif datapoint > 30000 and datapoint < 40000:
-                temp = [(round((datapoint-30000), 4)), 30000]
-                singlesubj_data.append(temp)
-            elif datapoint > 40000 and datapoint < 50000:
-                temp = [(round((datapoint-40000), 4)), 40000]
-                singlesubj_data.append(temp)
-            elif datapoint > 50000 and datapoint < 60000:
-                temp = [(round((datapoint-50000), 4)), 50000]
-                singlesubj_data.append(temp)
-            elif datapoint > 60000 and datapoint < 70000: 
-                temp = [(round((datapoint-60000), 4)), 60000]
-                singlesubj_data.append(temp)
-            elif datapoint > 70000 and datapoint < 80000: 
-                temp = [(round((datapoint-70000), 4)), 70000]
-                singlesubj_data.append(temp)
-            elif datapoint > 80000 and datapoint < 90000:
-                temp = [(round((datapoint-80000), 4)), 80000]
-                singlesubj_data.append(temp)
-            elif datapoint > 90000 and datapoint < (100000):
-                temp = [(round((datapoint-90000), 4)), 90000]
-                singlesubj_data.append(temp)
-        time_event_data.append((subject_id, session_id, singlesubj_data))
-    list_of_temp_dfs = []
-    for subject_id, session_id, datapoints in time_event_data:
-        for time, event in datapoints:
+    if multi_array == True:
+        list_of_temp_dfs = []
+        for subject_id, session_id, datapoint, timepoint in data_list:
             temp_df = pd.DataFrame({'subject': subject_id, 'session':session_id,
-                                    'event': event, 'time': time}, index=[0])
+                                    'event': datapoint, 'time': timepoint})
             list_of_temp_dfs.append(temp_df)
-    time_event_df = pd.concat(list_of_temp_dfs)
-    time_event_df = time_event_df.dropna()
-    return time_event_df
+        time_event_df = pd.concat(list_of_temp_dfs)
+        time_event_df = time_event_df.dropna()
+        return time_event_df
+    if multi_array == False: 
+        for subject_id, session_id, datapoints in data_list:
+            singlesubj_data = []
+            for datapoint in datapoints:
+                temp = []
+                datapoint = float(datapoint)
+                if datapoint > 10000 and datapoint < 20000:
+                    temp = [(round((datapoint-10000), 4)), 10000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 20000 and datapoint < 30000: 
+                    temp = [(round((datapoint-20000), 4)), 20000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 30000 and datapoint < 40000:
+                    temp = [(round((datapoint-30000), 4)), 30000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 40000 and datapoint < 50000:
+                    temp = [(round((datapoint-40000), 4)), 40000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 50000 and datapoint < 60000:
+                    temp = [(round((datapoint-50000), 4)), 50000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 60000 and datapoint < 70000: 
+                    temp = [(round((datapoint-60000), 4)), 60000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 70000 and datapoint < 80000: 
+                    temp = [(round((datapoint-70000), 4)), 70000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 80000 and datapoint < 90000:
+                    temp = [(round((datapoint-80000), 4)), 80000]
+                    singlesubj_data.append(temp)
+                elif datapoint > 90000 and datapoint < (100000):
+                    temp = [(round((datapoint-90000), 4)), 90000]
+                    singlesubj_data.append(temp)
+            time_event_data.append((subject_id, session_id, singlesubj_data))
+        list_of_temp_dfs = []
+        for subject_id, session_id, datapoints in time_event_data:
+            for time, event in datapoints:
+                temp_df = pd.DataFrame({'subject': subject_id, 'session':session_id,
+                                        'event': event, 'time': time}, index=[0])
+                list_of_temp_dfs.append(temp_df)
+        time_event_df = pd.concat(list_of_temp_dfs)
+        time_event_df = time_event_df.dropna()
+        return time_event_df
 
 # count number of x event between a trial start/end or end/start
 # eg, presses between trial start and trial end
@@ -246,3 +289,31 @@ def event_timed_latency(df, event1, seconds_post_event, event_of_interest):
     
     result_df = pd.DataFrame(result_data)
     return result_df
+
+
+#gets average time between multiple instances of a single event
+#eg, inter press intervals
+def inter_event_interval(df, event):
+    averages = []
+    animal_average = 0
+    instance_lat_from_prev = 0
+    event_count = 0
+    prev_event_time = 0
+    for animal_session, animal_session_data in df.groupby('animal_session'):
+        for index, row in animal_session_data.iterrows():
+            if row['event'] == event:
+                if event_count == 0:
+                    event_count += 1
+                    prev_event_time = row['time']
+                elif event_count > 0:
+                    event_count +=1
+                    instance_lat_from_prev = (row['time'] - prev_event_time)
+                    animal_average += instance_lat_from_prev
+                    prev_event_time = row['time']
+        animal_average = animal_average/event_count
+        averages.append(animal_average)
+        animal_average = 0
+        instance_lat_from_prev = 0
+        event_count = 0
+        prev_event_count = 0
+    return averages
