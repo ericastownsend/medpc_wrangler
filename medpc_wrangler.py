@@ -122,15 +122,14 @@ def extract_data_from_file(file_data, multi_array = True):
 # if event codes are not in X0000 format or more/less event codes exist this will need updating
 def time_event(data_list, multi_array = True):
     time_event_data = []
-    if multi_array == True:
-        list_of_temp_dfs = []
-        for subject_id, session_id, datapoint, timepoint in data_list:
-            temp_df = pd.DataFrame({'subject': subject_id, 'session':session_id,
-                                    'event': datapoint, 'time': timepoint})
-            list_of_temp_dfs.append(temp_df)
-        time_event_df = pd.concat(list_of_temp_dfs)
-        time_event_df = time_event_df.dropna()
-        return time_event_df
+    list_of_temp_dfs = []
+    for subject_id, session_id, datapoint, timepoint in data_list:
+        temp_df = pd.DataFrame({'subject': subject_id, 'session':session_id,
+                                'event': datapoint, 'time': timepoint})
+        list_of_temp_dfs.append(temp_df)
+    time_event_df = pd.concat(list_of_temp_dfs)
+    time_event_df = time_event_df.dropna()
+    return time_event_df
     if multi_array == False: 
         for subject_id, session_id, datapoints in data_list:
             singlesubj_data = []
