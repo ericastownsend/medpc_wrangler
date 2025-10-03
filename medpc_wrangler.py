@@ -294,7 +294,7 @@ def event_timed_latency(df, event1, seconds_post_event, event_of_interest):
 #gets average time between multiple instances of a single event
 #eg, inter press intervals
 def inter_event_interval(df, event):
-    averages = []
+    average_iei_df = {'subject': [], 'session': [], 'average_iei': []}
     animal_average = 0
     instance_lat_from_prev = 0
     event_count = 0
@@ -311,9 +311,12 @@ def inter_event_interval(df, event):
                     animal_average += instance_lat_from_prev
                     prev_event_time = row['time']
         animal_average = animal_average/event_count
-        averages.append(animal_average)
+        average_iei_df['average_iei'].append(animal_average)
+        average_iei_df['subject'].append(animal_session_data['subject'].values[0])
+        average_iei_df['session'].append(animal_session_data['session'].values[0])
         animal_average = 0
         instance_lat_from_prev = 0
         event_count = 0
         prev_event_count = 0
-    return averages
+    average_iei_df = pd.DataFrame(average_iei_df)
+    return average_iei_df
