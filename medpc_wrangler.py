@@ -120,7 +120,7 @@ def extract_data_from_file(file_data, multi_array = True):
 
 # take extracted data list and form a more digestible dataframe with events and timestamps
 # if event codes are not in X0000 format or more/less event codes exist this will need updating
-def time_event(data_list):
+def time_event(data_list, multi_array = True):
     time_event_data = []
     if multi_array == True:
         list_of_temp_dfs = []
