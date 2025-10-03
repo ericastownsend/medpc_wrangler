@@ -3,26 +3,8 @@ a set of functions to read and clean medPC data files, as well as pull out speci
 
 files:
 medpc_wrangler.py - functions written in python  
-medpc_wrangler_example.ipynb - walkthrough of function use  
+medpc_wrangler_example.ipynb - walkthrough of function use for users who store data in one array (ie, data formats in event+timestamp format)
 medpc_data_example - one of two medpc data files used in the example .ipynb file above  
+medpc_wrangler_example_multiarray.ipynb - walkthrough of function use for users who store data in two arrays (ie, events in one array and corresponding timestamps in a separate array). *beware that some auxillary functions may not be useable, as many of them were created for pavlovian trial based data*
 
-## med pc file output requirements:  
-**event codes are saved as event code + time in seconds**  
-  
-brief example:   
-  
-\event codes  
-^RepA = 10000 \CS+ press  
-^RepB = 20000 \CS- press  
-^MS = 30000 \mag start  
-^ME = 40000 \mag end  
-^CSAS = 50000 \CS+ start  
-^CSAE = 60000 \ CS+ end  
-^CSBS = 70000 \CS- start  
-^CSBE = 80000 \CS- end  
-  
-a CS+ press at second 456.78 would appear as 10456.78  
-  
-*these event codes are malleable. if the value of your event codes differ (but save in the data as (event code + timestamp)) or you have less/more than 9 event codes, the time_event function may require minor editing.*
-
-finally, your data should be saved **only in the B: array** of the medpc file. an example of what this might look like can be seen in medpc_wrangler_example.ipynb or medpc_data_example. this is a simple tweak in the extract_data_from_file function.
+*event codes and arrays are malleable. some functions may require minor editing if anything is hardcoded (eg, array identifiers or event codes beyond 9000 if your data is stored entirely in one array.*
