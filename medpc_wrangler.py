@@ -44,7 +44,7 @@ def mpc_to_strings(filename):
     fid = open(filename)
     lines = fid.readlines() 
     fid.close()
-    lines = [line for line in lines if ':        0.000' not in line]
+    lines = [line for line in lines if ':        0.000        0.000        0.000        0.000        0.000' not in line]
     subjects_data = [] 
     current_subject_data = []  
     for line in lines:
